@@ -7,6 +7,7 @@ import IntegracionBackFront.backfront.Services.Products.ProductService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -26,10 +27,23 @@ public class ProductController {
     private ProductService service;
 
     @GetMapping("/getDataProducts")
-    private List<ProductDTO> getProducts(){
-        return service.getAllProducts();
+    private ResponseEntity<Page<ProductDTO>> getProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "3") int size){
+        if (size <= 0 || size > 50){
+            ResponseEntity.badRequest().body(Map.of(
+                    "status", "El tamaño de la página debe estar entre 1 y 50"
+            ));
+            return ResponseEntity.ok(null);
+        }
+        Page<ProductDTO> products = service.getAllProducts(page, size);
+        if (products == null){
+            ResponseEntity.badRequest().body(Map.of(
+                    "status", "Error al obtener los datos"
+            ));
+        }
+        return ResponseEntity.ok(products);
     }
-
 
     @PostMapping("/newProduct")
     private ResponseEntity<Map<String, Object>> inserCategory(@Valid @RequestBody ProductDTO json, HttpServletRequest request){
